@@ -9,7 +9,7 @@ class ProductProvider extends Component {
   state = {
     products: [],
     detailProduct: detailProduct,
-    cart: storeProducts,
+    cart: [],
     modalOpen: false,
     modalProduct: detailProduct,
     cartSubTotal: 0,
@@ -66,12 +66,17 @@ class ProductProvider extends Component {
 
   openModal = id => {
     const product = this.getItem(id);
-    this.setState(() => {
-      return {
-        modalProduct: product,
-        modalOpen: true
-      };
-    });
+    this.setState(
+      () => {
+        return {
+          modalProduct: product,
+          modalOpen: true
+        };
+      },
+      () => {
+        this.addTotals();
+      }
+    );
   };
 
   closeModal = () => {
@@ -89,11 +94,56 @@ class ProductProvider extends Component {
   };
 
   removeItem = id => {
-    console.log("this is the removeItem method");
+    let tempProducts = { ...this.state.products };
+    let tempCart = [...this.state.cart];
+
+    tempCart = tempCart.filter(item => item.id !== id);
+
+    const index = tempProducts.indexOf(this.getItem(id));
+    let removedProduct = tempProducts[index];
+
+    removedProduct.inCart = false;
+    removedProduct.count = 0;
+    removedProduct.total = 0;
+
+    this.setState(
+      () => {
+        return {
+          cart: [...tempCart],
+          products: [...tempProducts]
+        };
+      },
+      () => {
+        this.addTotals();
+      }
+    );
   };
 
   clearCart = () => {
-    console.log("this is the clearCart method");
+    this.setState(
+      () => {
+        return { cart: [] };
+      },
+      () => {
+        this.setProducts();
+        this.addTotals();
+      }
+    );
+  };
+
+  addTotals = () => {
+    let subTotal = 0;
+    this.state.cart.map(item => (subTotal += item.total));
+    const tempTax = subTotal * 0.1;
+    const tax = parseFloat(tempTax.toFixed(2));
+    const total = subTotal + tax;
+    this.setState(() => {
+      return {
+        cartSubTotal: subTotal,
+        cartTax: tax,
+        cartTotal: total
+      };
+    });
   };
 
   render() {
